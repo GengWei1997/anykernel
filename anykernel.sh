@@ -28,7 +28,8 @@ ramdisk_compression=auto;
 . tools/ak3-core.sh;
 
 ## AnyKernel install
-dump_boot;
+# skip ramdisk unpack/repack (boot may have no standalone ramdisk)
+split_boot;
 
 case "$ZIPFILE" in
   *66fps*|*66hz*)
@@ -61,13 +62,16 @@ case "$ZIPFILE" in
     ;;
   *)
     patch_cmdline "msm_drm.framerate_override" ""
-    fr=$(cat /sdcard/framerate_override | tr -cd "[0-9]");
-    [ $fr -eq 66 ] && ui_print "  • Setting 66 Hz refresh rate" && patch_cmdline "msm_drm.framerate_override" "msm_drm.framerate_override=1"
-    [ $fr -eq 69 ] && ui_print "  • Setting 69 Hz refresh rate" && patch_cmdline "msm_drm.framerate_override" "msm_drm.framerate_override=2"
-    [ $fr -eq 72 ] && ui_print "  • Setting 72 Hz refresh rate" && patch_cmdline "msm_drm.framerate_override" "msm_drm.framerate_override=3"
-    [ $fr -eq 75 ] && ui_print "  • Setting 75 Hz refresh rate" && patch_cmdline "msm_drm.framerate_override" "msm_drm.framerate_override=4"
+    if [ -f /sdcard/framerate_override ]; then
+      fr=$(cat /sdcard/framerate_override | tr -cd "0-9")
+      [ "$fr" = "66" ] && ui_print "  • Setting 66 Hz refresh rate" && patch_cmdline "msm_drm.framerate_override" "msm_drm.framerate_override=1"
+      [ "$fr" = "69" ] && ui_print "  • Setting 69 Hz refresh rate" && patch_cmdline "msm_drm.framerate_override" "msm_drm.framerate_override=2"
+      [ "$fr" = "72" ] && ui_print "  • Setting 72 Hz refresh rate" && patch_cmdline "msm_drm.framerate_override" "msm_drm.framerate_override=3"
+      [ "$fr" = "75" ] && ui_print "  • Setting 75 Hz refresh rate" && patch_cmdline "msm_drm.framerate_override" "msm_drm.framerate_override=4"
+    fi
     ;;
 esac
 
-write_boot;
+flash_boot;
+flash_dtbo;
 ## end install
